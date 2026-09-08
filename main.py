@@ -112,3 +112,15 @@ class VentanaSettings(QDialog):
             self.boton_color_menu.setText(
                 self.color_menu
             )
+
+    def seleccionar_color_letra(self):
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            self.color_letra = color.name()
+
+            self.boton_color_letra.setText(
+                self.color_letra
+            )
+
+    
