@@ -141,3 +141,44 @@ class VentanaSettings(QDialog):
             "Configuración",
             "Configuración preparada para guardar."
         )
+
+class VentanaPrincipal(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle(
+            "Gestión de Configuración de Usuario"
+        )
+
+        self.resize(900, 550)
+
+        self.crear_menu()
+        self.crear_interfaz()
+
+    def crear_menu(self):
+        barra = self.menuBar()
+
+        menu_archivo = barra.addMenu("Archivo")
+        menu_edicion = barra.addMenu("Edición")
+        menu_ver = barra.addMenu("Ver")
+
+        accion_settings = barra.addAction("Settings")
+
+        menu_archivo.addAction("Nuevo")
+        menu_archivo.addAction("Abrir")
+        menu_archivo.addSeparator()
+
+        accion_salir = menu_archivo.addAction("Salir")
+
+        menu_edicion.addAction("Copiar")
+        menu_edicion.addAction("Pegar")
+
+        menu_ver.addAction("Actualizar")
+
+        accion_settings.triggered.connect(
+            self.abrir_settings
+        )
+
+        accion_salir.triggered.connect(
+            self.close
+        )
