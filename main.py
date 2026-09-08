@@ -123,4 +123,14 @@ class VentanaSettings(QDialog):
                 self.color_letra
             )
 
-    
+    def seleccionar_foto(self):
+        archivo, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleccionar foto de perfil",
+            "",
+            "Imágenes (*.png *.jpg *.jpeg)"
+        )
+
+        if archivo:
+            self.foto_perfil = archivo
+            self.boton_foto.setText("Foto seleccionada")
