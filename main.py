@@ -103,3 +103,12 @@ class VentanaSettings(QDialog):
 
         self.setLayout(formulario)
 
+    def seleccionar_color_menu(self):
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            self.color_menu = color.name()
+
+            self.boton_color_menu.setText(
+                self.color_menu
+            )
