@@ -182,3 +182,32 @@ class VentanaPrincipal(QMainWindow):
         accion_salir.triggered.connect(
             self.close
         )
+
+    def crear_interfaz(self):
+        titulo = QLabel(
+            "Gestión de Configuración de Usuario"
+        )
+
+        titulo.setStyleSheet(
+            "font-size: 26px;"
+            "font-weight: bold;"
+        )
+
+        texto = QLabel(
+            "Utilice la opción Settings para modificar "
+            "la configuración del usuario."
+        )
+
+        layout = QVBoxLayout()
+
+        layout.addStretch()
+        layout.addWidget(titulo)
+        layout.addWidget(texto)
+        layout.addStretch()
+
+        contenedor = QWidget()
+
+        contenedor.setLayout(layout)
+
+        self.setCentralWidget(contenedor)
+
