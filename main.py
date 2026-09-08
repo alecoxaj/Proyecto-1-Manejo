@@ -134,3 +134,10 @@ class VentanaSettings(QDialog):
         if archivo:
             self.foto_perfil = archivo
             self.boton_foto.setText("Foto seleccionada")
+
+    def guardar_configuracion(self):
+        QMessageBox.information(
+            self,
+            "Configuración",
+            "Configuración preparada para guardar."
+        )
