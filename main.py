@@ -211,3 +211,14 @@ class VentanaPrincipal(QMainWindow):
 
         self.setCentralWidget(contenedor)
 
+    def abrir_settings(self):
+        ventana = VentanaSettings()
+        ventana.exec()
+
+
+app = QApplication(sys.argv)
+
+ventana = VentanaPrincipal()
+ventana.show()
+
+sys.exit(app.exec())
