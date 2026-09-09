@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
+    QHBoxLayout,
     QDialog,
     QFormLayout,
     QLineEdit,
@@ -50,14 +51,18 @@ def color_fue_personalizado(configuracion):
         ""
     ).lower()
 
-    if color not in (
-        "",
-        "#000000",
-        "#ffffff"
-    ):
-        return True
+    tema = configuracion.get(
+        "tema_interfaz",
+        "Claro"
+    )
 
-    return False
+    color_predeterminado = (
+        color_predeterminado_tema(
+            tema
+        )
+    )
+
+    return color != color_predeterminado
 
 
 def crear_estilo(
@@ -187,11 +192,15 @@ class VentanaSettings(QDialog):
     ):
         super().__init__(parent)
 
-        self.configuracion = configuracion.copy()
+        self.configuracion = (
+            configuracion.copy()
+        )
 
-        self.color_menu = self.configuracion[
-            "color_barra_menu"
-        ]
+        self.color_menu = (
+            self.configuracion[
+                "color_barra_menu"
+            ]
+        )
 
         self.color_personalizado = (
             color_fue_personalizado(
@@ -215,9 +224,11 @@ class VentanaSettings(QDialog):
                 )
             )
 
-        self.foto_perfil = self.configuracion[
-            "foto_perfil"
-        ]
+        self.foto_perfil = (
+            self.configuracion[
+                "foto_perfil"
+            ]
+        )
 
         self.setFixedSize(
             520,
@@ -242,11 +253,52 @@ class VentanaSettings(QDialog):
         )
 
         self.tamano_fuente.setButtonSymbols(
-            QAbstractSpinBox.ButtonSymbols.UpDownArrows
+            QAbstractSpinBox.ButtonSymbols.NoButtons
         )
 
-        self.tamano_fuente.setMinimumWidth(
-            120
+        self.boton_aumentar_fuente = QPushButton(
+            "▲"
+        )
+
+        self.boton_disminuir_fuente = QPushButton(
+            "▼"
+        )
+
+        self.boton_aumentar_fuente.setFixedWidth(
+            35
+        )
+
+        self.boton_disminuir_fuente.setFixedWidth(
+            35
+        )
+
+        self.contenedor_fuente = QWidget()
+
+        self.layout_fuente = QHBoxLayout(
+            self.contenedor_fuente
+        )
+
+        self.layout_fuente.setContentsMargins(
+            0,
+            0,
+            0,
+            0
+        )
+
+        self.layout_fuente.setSpacing(
+            3
+        )
+
+        self.layout_fuente.addWidget(
+            self.tamano_fuente
+        )
+
+        self.layout_fuente.addWidget(
+            self.boton_aumentar_fuente
+        )
+
+        self.layout_fuente.addWidget(
+            self.boton_disminuir_fuente
         )
 
         self.boton_color_menu = QPushButton()
@@ -286,7 +338,7 @@ class VentanaSettings(QDialog):
 
         self.formulario.addRow(
             self.etiqueta_fuente,
-            self.tamano_fuente
+            self.contenedor_fuente
         )
 
         self.formulario.addRow(
@@ -325,6 +377,14 @@ class VentanaSettings(QDialog):
 
         self.tema.currentIndexChanged.connect(
             self.cambiar_tema
+        )
+
+        self.boton_aumentar_fuente.clicked.connect(
+            self.aumentar_fuente
+        )
+
+        self.boton_disminuir_fuente.clicked.connect(
+            self.disminuir_fuente
         )
 
         self.boton_color_menu.clicked.connect(
@@ -617,6 +677,22 @@ class VentanaSettings(QDialog):
                 self.color_letra
             )
 
+    def aumentar_fuente(self):
+        valor = self.tamano_fuente.value()
+
+        if valor < self.tamano_fuente.maximum():
+            self.tamano_fuente.setValue(
+                valor + 1
+            )
+
+    def disminuir_fuente(self):
+        valor = self.tamano_fuente.value()
+
+        if valor > self.tamano_fuente.minimum():
+            self.tamano_fuente.setValue(
+                valor - 1
+            )
+
     def seleccionar_color_menu(self):
         color = QColorDialog.getColor(
             parent=self
@@ -668,13 +744,11 @@ class VentanaSettings(QDialog):
                 "Imágenes (*.png *.jpg *.jpeg)"
             )
 
-        archivo, _ = (
-            QFileDialog.getOpenFileName(
-                self,
-                titulo,
-                "",
-                filtro
-            )
+        archivo, _ = QFileDialog.getOpenFileName(
+            self,
+            titulo,
+            "",
+            filtro
         )
 
         if archivo:
@@ -799,7 +873,9 @@ class VentanaSettings(QDialog):
     ):
         idioma = self.idioma.currentData()
 
-        texto_error = str(error).lower()
+        texto_error = str(
+            error
+        ).lower()
 
         sin_permiso = (
             error == "sin_permiso_escritura"
@@ -1034,11 +1110,9 @@ class VentanaPrincipal(QMainWindow):
             self.aplicar_configuracion()
 
     def aplicar_configuracion(self):
-        personalizado = (
-            self.configuracion.get(
-                "color_letra_personalizado",
-                False
-            )
+        personalizado = self.configuracion.get(
+            "color_letra_personalizado",
+            False
         )
 
         if not personalizado:
