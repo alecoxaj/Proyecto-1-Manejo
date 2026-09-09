@@ -45,5 +45,19 @@ def cargar_configuracion():
             "Se utilizarán valores predeterminados."
         )
 
+    except PermissionError:
+        return (
+            CONFIGURACION_PREDETERMINADA.copy(),
+            "No se tienen permisos para leer el archivo "
+            "de configuración. "
+            "Se utilizarán valores predeterminados."
+        )
+
+    except OSError as error:
+        return (
+            CONFIGURACION_PREDETERMINADA.copy(),
+            f"Error al leer la configuración: {error}"
+        )
+
 
 
