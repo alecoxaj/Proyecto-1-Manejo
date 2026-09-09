@@ -249,7 +249,9 @@ class VentanaSettings(QDialog):
         )
 
         self.idioma_original = (
-            self.configuracion["idioma"]
+            self.configuracion[
+                "idioma"
+            ]
         )
 
         self.color_menu = (
@@ -694,9 +696,13 @@ class VentanaSettings(QDialog):
         self,
         indice=None
     ):
-        idioma = self.idioma.currentData()
+        idioma = (
+            self.idioma.currentData()
+        )
 
-        tema = self.tema.currentData()
+        tema = (
+            self.tema.currentData()
+        )
 
         if idioma is None:
             return
@@ -721,7 +727,9 @@ class VentanaSettings(QDialog):
         self,
         indice=None
     ):
-        tema = self.tema.currentData()
+        tema = (
+            self.tema.currentData()
+        )
 
         if tema is None:
             return
@@ -764,7 +772,9 @@ class VentanaSettings(QDialog):
             )
 
     def seleccionar_color_menu(self):
-        idioma = self.idioma.currentData()
+        idioma = (
+            self.idioma.currentData()
+        )
 
         aplicar_idioma_qt(
             idioma
@@ -782,7 +792,9 @@ class VentanaSettings(QDialog):
             )
 
         color = QColorDialog.getColor(
-            QColor(self.color_menu),
+            QColor(
+                self.color_menu
+            ),
             self,
             titulo,
             QColorDialog.ColorDialogOption.DontUseNativeDialog
@@ -798,7 +810,9 @@ class VentanaSettings(QDialog):
             )
 
     def seleccionar_color_letra(self):
-        idioma = self.idioma.currentData()
+        idioma = (
+            self.idioma.currentData()
+        )
 
         aplicar_idioma_qt(
             idioma
@@ -815,7 +829,9 @@ class VentanaSettings(QDialog):
             )
 
         color = QColorDialog.getColor(
-            QColor(self.color_letra),
+            QColor(
+                self.color_letra
+            ),
             self,
             titulo,
             QColorDialog.ColorDialogOption.DontUseNativeDialog
@@ -826,17 +842,17 @@ class VentanaSettings(QDialog):
                 color.name()
             )
 
-            self.color_personalizado = True
+            self.color_personalizado = (
+                True
+            )
 
             self.boton_color_letra.setText(
                 self.color_letra
             )
 
     def seleccionar_foto(self):
-        idioma = self.idioma.currentData()
-
-        aplicar_idioma_qt(
-            idioma
+        idioma = (
+            self.idioma.currentData()
         )
 
         if idioma == "en-US":
@@ -857,13 +873,13 @@ class VentanaSettings(QDialog):
                 "Imágenes (*.png *.jpg *.jpeg)"
             )
 
-        archivo, _ = QFileDialog.getOpenFileName(
-            self,
-            titulo,
-            "",
-            filtro,
-            "",
-            QFileDialog.Option.DontUseNativeDialog
+        archivo, _ = (
+            QFileDialog.getOpenFileName(
+                self,
+                titulo,
+                "",
+                filtro
+            )
         )
 
         if archivo:
