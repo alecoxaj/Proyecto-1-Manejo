@@ -450,10 +450,6 @@ class VentanaPrincipal(QMainWindow):
             "color_barra_menu"
         ]
 
-        color_letra = self.configuracion[
-            "color_letra"
-        ]
-
         tamano = self.configuracion[
             "tamano_fuente"
         ]
@@ -462,11 +458,13 @@ class VentanaPrincipal(QMainWindow):
             fondo = "#202124"
             controles = "#303134"
             borde = "#5f6368"
+            color_letra = "#ffffff"
 
         else:
             fondo = "#ffffff"
             controles = "#f5f5f5"
             borde = "#cccccc"
+            color_letra = "#000000"
 
         estilo = f"""
             QMainWindow {{
