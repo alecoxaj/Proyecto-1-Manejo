@@ -1,10 +1,10 @@
 {
     "nombre_usuario": "Fátima Sandoval",
-    "tema_interfaz": "Claro",
+    "tema_interfaz": "Oscuro",
     "idioma": "en-US",
-    "tamano_fuente": 18,
-    "color_barra_menu": "#0000ff",
-    "color_letra": "#6ac8bd",
+    "tamano_fuente": 16,
+    "color_barra_menu": "#aaaaff",
+    "color_letra": "#5555ff",
     "color_letra_personalizado": true,
-    "foto_perfil": "C:/Users/aleja/Downloads/iPhone Air.jpg"
+    "foto_perfil": "C:/Users/aleja/Downloads/iPhone 17 Pro.jpg"
 }
