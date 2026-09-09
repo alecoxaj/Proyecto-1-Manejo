@@ -19,7 +19,11 @@ from PySide6.QtWidgets import (
 )
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, QTimer
+
+from PySide6.QtCore import (
+    Qt,
+    QTimer
+)
 
 from configuracion import (
     cargar_configuracion,
@@ -27,46 +31,176 @@ from configuracion import (
 )
 
 
+def crear_estilo(
+    tema,
+    color_menu,
+    color_letra,
+    tamano
+):
+    if tema == "Oscuro":
+        fondo = "#202124"
+        controles = "#303134"
+        borde = "#5f6368"
+
+        fondo_lista = "#303134"
+        texto_lista = "#ffffff"
+
+        seleccion_lista = "#505050"
+        texto_seleccion = "#ffffff"
+
+        fondo_menu = "#303134"
+        texto_menu = "#ffffff"
+
+    else:
+        fondo = "#ffffff"
+        controles = "#f5f5f5"
+        borde = "#cccccc"
+
+        fondo_lista = "#ffffff"
+        texto_lista = "#000000"
+
+        seleccion_lista = "#d6d6d6"
+        texto_seleccion = "#000000"
+
+        fondo_menu = "#ffffff"
+        texto_menu = "#000000"
+
+    estilo = f"""
+        QMainWindow {{
+            background-color: {fondo};
+        }}
+
+        QDialog {{
+            background-color: {fondo};
+        }}
+
+        QLabel {{
+            color: {color_letra};
+            font-size: {tamano}px;
+        }}
+
+        QLineEdit {{
+            background-color: {controles};
+            color: {color_letra};
+            border: 1px solid {borde};
+            padding: 5px;
+        }}
+
+        QComboBox {{
+            background-color: {controles};
+            color: {color_letra};
+            border: 1px solid {borde};
+            padding: 5px;
+        }}
+
+        QSpinBox {{
+            background-color: {controles};
+            color: {color_letra};
+            border: 1px solid {borde};
+            padding: 5px;
+        }}
+
+        QPushButton {{
+            background-color: {controles};
+            color: {color_letra};
+            border: 1px solid {borde};
+            padding: 6px;
+        }}
+
+        QComboBox QAbstractItemView {{
+            background-color: {fondo_lista};
+            color: {texto_lista};
+            selection-background-color: {seleccion_lista};
+            selection-color: {texto_seleccion};
+            border: 1px solid {borde};
+            outline: none;
+        }}
+
+        QMenuBar {{
+            background-color: {color_menu};
+            color: #000000;
+        }}
+
+        QMenuBar::item {{
+            background-color: transparent;
+            color: #000000;
+            padding: 6px 10px;
+        }}
+
+        QMenuBar::item:selected {{
+            background-color: #d6d6d6;
+            color: #000000;
+        }}
+
+        QMenu {{
+            background-color: {fondo_menu};
+            color: {texto_menu};
+        }}
+
+        QMenu::item {{
+            background-color: transparent;
+            color: {texto_menu};
+            padding: 6px 25px;
+        }}
+
+        QMenu::item:selected {{
+            background-color: {seleccion_lista};
+            color: {texto_seleccion};
+        }}
+    """
+
+    return estilo
+
+
 class VentanaSettings(QDialog):
-    def __init__(self, configuracion):
-        super().__init__()
+    def __init__(
+        self,
+        configuracion,
+        parent=None
+    ):
+        super().__init__(parent)
 
         self.configuracion = configuracion.copy()
 
-        self.setFixedSize(500, 480)
+        self.color_menu = self.configuracion[
+            "color_barra_menu"
+        ]
+
+        self.color_letra = self.configuracion[
+            "color_letra"
+        ]
+
+        self.foto_perfil = self.configuracion[
+            "foto_perfil"
+        ]
+
+        self.setFixedSize(
+            520,
+            500
+        )
 
         self.nombre_usuario = QLineEdit()
 
         self.tema = QComboBox()
 
         self.idioma = QComboBox()
-        self.idioma.addItem("Español", "es-ES")
-        self.idioma.addItem("English", "en-US")
 
         self.tamano_fuente = QSpinBox()
-        self.tamano_fuente.setRange(8, 40)
+
+        self.tamano_fuente.setRange(
+            8,
+            40
+        )
 
         self.boton_color_menu = QPushButton()
-        self.boton_color_menu.clicked.connect(
-            self.seleccionar_color_menu
-        )
 
         self.boton_color_letra = QPushButton()
-        self.boton_color_letra.clicked.connect(
-            self.seleccionar_color_letra
-        )
 
         self.boton_foto = QPushButton()
-        self.boton_foto.clicked.connect(
-            self.seleccionar_foto
-        )
-
-        self.ruta_foto = QLabel()
 
         self.boton_guardar = QPushButton()
-        self.boton_guardar.clicked.connect(
-            self.guardar
-        )
+
+        self.ruta_foto = QLabel()
 
         self.etiqueta_nombre = QLabel()
         self.etiqueta_tema = QLabel()
@@ -122,47 +256,73 @@ class VentanaSettings(QDialog):
             self.boton_guardar
         )
 
-        self.setLayout(self.formulario)
+        self.setLayout(
+            self.formulario
+        )
 
         self.cargar_datos()
 
         self.idioma.currentIndexChanged.connect(
-            self.actualizar_textos
+            self.cambiar_idioma
         )
 
-        self.actualizar_textos()
+        self.tema.currentIndexChanged.connect(
+            self.cambiar_tema
+        )
+
+        self.boton_color_menu.clicked.connect(
+            self.seleccionar_color_menu
+        )
+
+        self.boton_color_letra.clicked.connect(
+            self.seleccionar_color_letra
+        )
+
+        self.boton_foto.clicked.connect(
+            self.seleccionar_foto
+        )
+
+        self.boton_guardar.clicked.connect(
+            self.guardar
+        )
 
     def cargar_datos(self):
         self.nombre_usuario.setText(
-            self.configuracion["nombre_usuario"]
+            self.configuracion[
+                "nombre_usuario"
+            ]
         )
-
-        idioma_actual = self.configuracion["idioma"]
-
-        indice_idioma = self.idioma.findData(
-            idioma_actual
-        )
-
-        if indice_idioma >= 0:
-            self.idioma.setCurrentIndex(
-                indice_idioma
-            )
 
         self.tamano_fuente.setValue(
-            self.configuracion["tamano_fuente"]
+            self.configuracion[
+                "tamano_fuente"
+            ]
         )
 
-        self.color_menu = self.configuracion[
-            "color_barra_menu"
+        idioma = self.configuracion[
+            "idioma"
         ]
 
-        self.color_letra = self.configuracion[
-            "color_letra"
+        tema = self.configuracion[
+            "tema_interfaz"
         ]
 
-        self.foto_perfil = self.configuracion[
-            "foto_perfil"
-        ]
+        self.configurar_comboboxes(
+            idioma,
+            tema
+        )
+
+        self.traducir_settings(
+            idioma
+        )
+
+        self.boton_color_menu.setText(
+            self.color_menu
+        )
+
+        self.boton_color_letra.setText(
+            self.color_letra
+        )
 
         if self.foto_perfil:
             self.ruta_foto.setText(
@@ -171,20 +331,98 @@ class VentanaSettings(QDialog):
                 )
             )
 
-        self.actualizar_textos()
+    def configurar_comboboxes(
+        self,
+        idioma,
+        tema
+    ):
+        self.idioma.blockSignals(
+            True
+        )
 
-    def actualizar_textos(self):
-        idioma_actual = self.idioma.currentData()
-        tema_actual = self.tema.currentData()
-
-        self.idioma.blockSignals(True)
-        self.tema.blockSignals(True)
+        self.tema.blockSignals(
+            True
+        )
 
         self.idioma.clear()
         self.tema.clear()
 
-        if idioma_actual == "en-US":
-            self.setWindowTitle("Settings")
+        if idioma == "en-US":
+            self.idioma.addItem(
+                "Spanish",
+                "es-ES"
+            )
+
+            self.idioma.addItem(
+                "English",
+                "en-US"
+            )
+
+            self.tema.addItem(
+                "Light",
+                "Claro"
+            )
+
+            self.tema.addItem(
+                "Dark",
+                "Oscuro"
+            )
+
+        else:
+            self.idioma.addItem(
+                "Español",
+                "es-ES"
+            )
+
+            self.idioma.addItem(
+                "Inglés",
+                "en-US"
+            )
+
+            self.tema.addItem(
+                "Claro",
+                "Claro"
+            )
+
+            self.tema.addItem(
+                "Oscuro",
+                "Oscuro"
+            )
+
+        indice_idioma = self.idioma.findData(
+            idioma
+        )
+
+        if indice_idioma >= 0:
+            self.idioma.setCurrentIndex(
+                indice_idioma
+            )
+
+        indice_tema = self.tema.findData(
+            tema
+        )
+
+        if indice_tema >= 0:
+            self.tema.setCurrentIndex(
+                indice_tema
+            )
+
+        self.idioma.blockSignals(
+            False
+        )
+
+        self.tema.blockSignals(
+            False
+        )
+
+    def traducir_settings(
+        self,
+        idioma
+    ):
+        if idioma == "en-US":
+            self.setWindowTitle(
+                "Settings"
+            )
 
             self.etiqueta_nombre.setText(
                 "Username:"
@@ -214,37 +452,24 @@ class VentanaSettings(QDialog):
                 "Profile picture:"
             )
 
-            self.idioma.addItem(
-                "Spanish",
-                "es-ES"
-            )
-
-            self.idioma.addItem(
-                "English",
-                "en-US"
-            )
-
-            self.tema.addItem(
-                "Light",
-                "Claro"
-            )
-
-            self.tema.addItem(
-                "Dark",
-                "Oscuro"
-            )
-
             self.boton_guardar.setText(
                 "Save settings"
             )
 
-            if not self.foto_perfil:
+            if self.foto_perfil:
+                self.boton_foto.setText(
+                    "Picture selected"
+                )
+
+            else:
                 self.boton_foto.setText(
                     "Select picture"
                 )
 
         else:
-            self.setWindowTitle("Configuración")
+            self.setWindowTitle(
+                "Configuración"
+            )
 
             self.etiqueta_nombre.setText(
                 "Nombre de usuario:"
@@ -274,71 +499,63 @@ class VentanaSettings(QDialog):
                 "Foto de perfil:"
             )
 
-            self.idioma.addItem(
-                "Español",
-                "es-ES"
-            )
-
-            self.idioma.addItem(
-                "Inglés",
-                "en-US"
-            )
-
-            self.tema.addItem(
-                "Claro",
-                "Claro"
-            )
-
-            self.tema.addItem(
-                "Oscuro",
-                "Oscuro"
-            )
-
             self.boton_guardar.setText(
                 "Guardar configuración"
             )
 
-            if not self.foto_perfil:
+            if self.foto_perfil:
+                self.boton_foto.setText(
+                    "Foto seleccionada"
+                )
+
+            else:
                 self.boton_foto.setText(
                     "Seleccionar foto"
                 )
 
-        indice_idioma = self.idioma.findData(
-            idioma_actual
+    def cambiar_idioma(
+        self,
+        indice=None
+    ):
+        idioma = self.idioma.currentData()
+
+        tema = self.tema.currentData()
+
+        if idioma is None:
+            return
+
+        if tema is None:
+            tema = "Claro"
+
+        self.configurar_comboboxes(
+            idioma,
+            tema
         )
 
-        if indice_idioma >= 0:
-            self.idioma.setCurrentIndex(
-                indice_idioma
-            )
-
-        indice_tema = self.tema.findData(
-            tema_actual
+        self.traducir_settings(
+            idioma
         )
 
-        if indice_tema < 0:
-            indice_tema = self.tema.findData(
-                self.configuracion["tema_interfaz"]
-            )
+    def cambiar_tema(
+        self,
+        indice=None
+    ):
+        tema = self.tema.currentData()
 
-        if indice_tema >= 0:
-            self.tema.setCurrentIndex(
-                indice_tema
-            )
+        if tema == "Oscuro":
+            self.color_letra = "#ffffff"
 
-        self.idioma.blockSignals(False)
-        self.tema.blockSignals(False)
-
-        self.boton_color_menu.setText(
-            self.color_menu
-        )
+        elif tema == "Claro":
+            self.color_letra = "#000000"
 
         self.boton_color_letra.setText(
             self.color_letra
         )
 
     def seleccionar_color_menu(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(
+            parent=self
+        )
 
         if color.isValid():
             self.color_menu = color.name()
@@ -348,7 +565,9 @@ class VentanaSettings(QDialog):
             )
 
     def seleccionar_color_letra(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(
+            parent=self
+        )
 
         if color.isValid():
             self.color_letra = color.name()
@@ -361,11 +580,22 @@ class VentanaSettings(QDialog):
         idioma = self.idioma.currentData()
 
         if idioma == "en-US":
-            titulo = "Select profile picture"
-            filtro = "Images (*.png *.jpg *.jpeg)"
+            titulo = (
+                "Select profile picture"
+            )
+
+            filtro = (
+                "Images (*.png *.jpg *.jpeg)"
+            )
+
         else:
-            titulo = "Seleccionar foto de perfil"
-            filtro = "Imágenes (*.png *.jpg *.jpeg)"
+            titulo = (
+                "Seleccionar foto de perfil"
+            )
+
+            filtro = (
+                "Imágenes (*.png *.jpg *.jpeg)"
+            )
 
         archivo, _ = QFileDialog.getOpenFileName(
             self,
@@ -378,28 +608,35 @@ class VentanaSettings(QDialog):
             self.foto_perfil = archivo
 
             self.ruta_foto.setText(
-                os.path.basename(archivo)
+                os.path.basename(
+                    archivo
+                )
             )
 
             if idioma == "en-US":
                 self.boton_foto.setText(
                     "Picture selected"
                 )
+
             else:
                 self.boton_foto.setText(
                     "Foto seleccionada"
                 )
 
     def guardar(self):
+        idioma = self.idioma.currentData()
+
+        tema = self.tema.currentData()
+
         nueva_configuracion = {
             "nombre_usuario":
                 self.nombre_usuario.text(),
 
             "tema_interfaz":
-                self.tema.currentData(),
+                tema,
 
             "idioma":
-                self.idioma.currentData(),
+                idioma,
 
             "tamano_fuente":
                 self.tamano_fuente.value(),
@@ -418,17 +655,45 @@ class VentanaSettings(QDialog):
             nueva_configuracion
         )
 
-        idioma = self.idioma.currentData()
-
         if correcto:
-            self.configuracion = nueva_configuracion
+            self.configuracion = (
+                nueva_configuracion
+            )
+
+            estilo = crear_estilo(
+                nueva_configuracion[
+                    "tema_interfaz"
+                ],
+                nueva_configuracion[
+                    "color_barra_menu"
+                ],
+                nueva_configuracion[
+                    "color_letra"
+                ],
+                nueva_configuracion[
+                    "tamano_fuente"
+                ]
+            )
+
+            QApplication.instance().setStyleSheet(
+                estilo
+            )
 
             if idioma == "en-US":
                 titulo = "Settings"
-                mensaje = "Your settings were saved successfully."
+
+                mensaje = (
+                    "Your settings were "
+                    "saved successfully."
+                )
+
             else:
                 titulo = "Configuración"
-                mensaje = "Tu configuración se guardó correctamente."
+
+                mensaje = (
+                    "Tu configuración se "
+                    "guardó correctamente."
+                )
 
             QMessageBox.information(
                 self,
@@ -439,146 +704,47 @@ class VentanaSettings(QDialog):
             self.accept()
 
         else:
-            if idioma == "en-US":
-                titulo = "Error"
-            else:
-                titulo = "Error"
-
-            QMessageBox.critical(
-                self,
-                titulo,
+            self.mostrar_error_guardado(
                 error
             )
 
-    def cargar_datos(self):
-        self.nombre_usuario.setText(
-            self.configuracion["nombre_usuario"]
-        )
+    def mostrar_error_guardado(
+        self,
+        error
+    ):
+        idioma = self.idioma.currentData()
 
-        self.tema.setCurrentText(
-            self.configuracion["tema_interfaz"]
-        )
-
-        indice_idioma = self.idioma.findData(
-            self.configuracion["idioma"]
-        )
-
-        if indice_idioma >= 0:
-            self.idioma.setCurrentIndex(
-                indice_idioma
-            )
-
-        self.tamano_fuente.setValue(
-            self.configuracion["tamano_fuente"]
-        )
-
-        self.color_menu = self.configuracion[
-            "color_barra_menu"
-        ]
-
-        self.color_letra = self.configuracion[
-            "color_letra"
-        ]
-
-        self.foto_perfil = self.configuracion[
-            "foto_perfil"
-        ]
-
-        self.boton_color_menu.setText(
-            self.color_menu
-        )
-
-        self.boton_color_letra.setText(
-            self.color_letra
-        )
-
-        if self.foto_perfil:
-            self.ruta_foto.setText(
-                os.path.basename(
-                    self.foto_perfil
+        if idioma == "en-US":
+            if error == "sin_permiso_escritura":
+                mensaje = (
+                    "You don't have permission "
+                    "to save the settings."
                 )
-            )
 
-    def seleccionar_color_menu(self):
-        color = QColorDialog.getColor()
-
-        if color.isValid():
-            self.color_menu = color.name()
-
-            self.boton_color_menu.setText(
-                self.color_menu
-            )
-
-    def seleccionar_color_letra(self):
-        color = QColorDialog.getColor()
-
-        if color.isValid():
-            self.color_letra = color.name()
-
-            self.boton_color_letra.setText(
-                self.color_letra
-            )
-
-    def seleccionar_foto(self):
-        archivo, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar foto de perfil",
-            "",
-            "Imágenes (*.png *.jpg *.jpeg)"
-        )
-
-        if archivo:
-            self.foto_perfil = archivo
-
-            self.ruta_foto.setText(
-                os.path.basename(archivo)
-            )
-
-    def guardar(self):
-        nueva_configuracion = {
-            "nombre_usuario":
-                self.nombre_usuario.text(),
-
-            "tema_interfaz":
-                self.tema.currentText(),
-
-            "idioma":
-                self.idioma.currentData(),
-
-            "tamano_fuente":
-                self.tamano_fuente.value(),
-
-            "color_barra_menu":
-                self.color_menu,
-
-            "color_letra":
-                self.color_letra,
-
-            "foto_perfil":
-                self.foto_perfil
-        }
-
-        correcto, error = guardar_configuracion(
-            nueva_configuracion
-        )
-
-        if correcto:
-            self.configuracion = nueva_configuracion
-
-            QMessageBox.information(
-                self,
-                "Configuración",
-                "La configuración se guardó correctamente."
-            )
-
-            self.accept()
+            else:
+                mensaje = (
+                    "We couldn't save "
+                    "your settings."
+                )
 
         else:
-            QMessageBox.critical(
-                self,
-                "Error",
-                error
-            )
+            if error == "sin_permiso_escritura":
+                mensaje = (
+                    "No tienes permisos para "
+                    "guardar la configuración."
+                )
+
+            else:
+                mensaje = (
+                    "No pudimos guardar "
+                    "tu configuración."
+                )
+
+        QMessageBox.critical(
+            self,
+            "Error",
+            mensaje
+        )
 
 
 class VentanaPrincipal(QMainWindow):
@@ -589,13 +755,15 @@ class VentanaPrincipal(QMainWindow):
             cargar_configuracion()
         )
 
-        self.setWindowTitle(
-            "Gestión de Configuración de Usuario"
+        self.corregir_color_incompatible()
+
+        self.resize(
+            900,
+            550
         )
 
-        self.resize(900, 550)
-
         self.crear_menu()
+
         self.crear_interfaz()
 
         self.aplicar_configuracion()
@@ -605,6 +773,31 @@ class VentanaPrincipal(QMainWindow):
                 200,
                 self.mostrar_error_carga
             )
+
+    def corregir_color_incompatible(self):
+        tema = self.configuracion[
+            "tema_interfaz"
+        ]
+
+        color = self.configuracion[
+            "color_letra"
+        ].lower()
+
+        if (
+            tema == "Claro"
+            and color == "#ffffff"
+        ):
+            self.configuracion[
+                "color_letra"
+            ] = "#000000"
+
+        elif (
+            tema == "Oscuro"
+            and color == "#000000"
+        ):
+            self.configuracion[
+                "color_letra"
+            ] = "#ffffff"
 
     def crear_menu(self):
         barra = self.menuBar()
@@ -736,12 +929,16 @@ class VentanaPrincipal(QMainWindow):
 
     def abrir_settings(self):
         ventana = VentanaSettings(
-            self.configuracion
+            self.configuracion,
+            self
         )
 
         resultado = ventana.exec()
 
-        if resultado == QDialog.DialogCode.Accepted:
+        if (
+            resultado
+            == QDialog.DialogCode.Accepted
+        ):
             self.configuracion = (
                 ventana.configuracion
             )
@@ -749,112 +946,27 @@ class VentanaPrincipal(QMainWindow):
             self.aplicar_configuracion()
 
     def aplicar_configuracion(self):
-        tema = self.configuracion[
-            "tema_interfaz"
-        ]
-
-        color_menu = self.configuracion[
-            "color_barra_menu"
-        ]
-
-        tamano = self.configuracion[
-            "tamano_fuente"
-        ]
-
-        if tema == "Oscuro":
-            fondo = "#202124"
-            controles = "#303134"
-            borde = "#5f6368"
-            color_letra = "#ffffff"
-
-            color_lista = "#303134"
-            color_texto_lista = "#ffffff"
-            seleccion_lista = "#505050"
-            color_texto_seleccion = "#ffffff"
-
-            color_texto_menu = "#000000"
-
-        else:
-            fondo = "#ffffff"
-            controles = "#f5f5f5"
-            borde = "#cccccc"
-            color_letra = "#000000"
-
-            color_lista = "#ffffff"
-            color_texto_lista = "#000000"
-            seleccion_lista = "#d6d6d6"
-            color_texto_seleccion = "#000000"
-
-            color_texto_menu = "#000000"
-
-        estilo = f"""
-            QMainWindow {{
-                background-color: {fondo};
-            }}
-
-            QDialog {{
-                background-color: {fondo};
-            }}
-
-            QLabel {{
-                color: {color_letra};
-                font-size: {tamano}px;
-            }}
-
-            QLineEdit,
-            QComboBox,
-            QSpinBox {{
-                background-color: {controles};
-                color: {color_letra};
-                border: 1px solid {borde};
-                padding: 5px;
-            }}
-            
-            QComboBox QAbstractItemView {{
-                background-color: {color_lista};
-                color: {color_texto_lista};
-                selection-background-color: {seleccion_lista};
-                selection-color: {color_texto_seleccion};
-                border: 1px solid {borde};
-                outline: none;
-}}
-            QPushButton {{
-                background-color: {controles};
-                color: {color_letra};
-                border: 1px solid {borde};
-                padding: 6px;
-            }}
-
-            QMenuBar {{
-                background-color: {color_menu};
-                color: {color_texto_menu};
-            }}
-
-            QMenuBar::item {{
-                color: {color_texto_menu};
-                padding: 6px 10px;
-            }}
-
-            QMenuBar::item:selected {{
-                background-color: #d6d6d6;
-                color: #000000;
-            }}
-
-            QMenu {{
-                background-color: {controles};
-                color: {color_letra};
-            }}
-
-            QMenu::item:selected {{
-                background-color: #505050;
-            }}
-        """
+        estilo = crear_estilo(
+            self.configuracion[
+                "tema_interfaz"
+            ],
+            self.configuracion[
+                "color_barra_menu"
+            ],
+            self.configuracion[
+                "color_letra"
+            ],
+            self.configuracion[
+                "tamano_fuente"
+            ]
+        )
 
         QApplication.instance().setStyleSheet(
             estilo
         )
 
         self.actualizar_idioma()
+
         self.actualizar_foto()
 
     def actualizar_idioma(self):
@@ -978,8 +1090,8 @@ class VentanaPrincipal(QMainWindow):
             )
 
             self.descripcion.setText(
-                "Utilice Settings para modificar "
-                "las preferencias del usuario."
+                "Utiliza Settings para modificar "
+                "tus preferencias."
             )
 
     def actualizar_foto(self):
@@ -987,8 +1099,13 @@ class VentanaPrincipal(QMainWindow):
             "foto_perfil"
         ]
 
-        if ruta and os.path.exists(ruta):
-            imagen = QPixmap(ruta)
+        if (
+            ruta
+            and os.path.exists(ruta)
+        ):
+            imagen = QPixmap(
+                ruta
+            )
 
             imagen = imagen.scaled(
                 140,
@@ -1005,16 +1122,84 @@ class VentanaPrincipal(QMainWindow):
             self.foto.clear()
 
     def mostrar_error_carga(self):
+        idioma = self.configuracion[
+            "idioma"
+        ]
+
+        if idioma == "en-US":
+            titulo = "Settings"
+
+            if self.error_carga == "archivo_ausente":
+                mensaje = (
+                    "No settings file was found. "
+                    "Default values will be used."
+                )
+
+            elif self.error_carga == "archivo_corrupto":
+                mensaje = (
+                    "Your settings file is corrupted "
+                    "or has an invalid format. "
+                    "Default values will be used."
+                )
+
+            elif self.error_carga == "sin_permiso_lectura":
+                mensaje = (
+                    "You don't have permission to "
+                    "read the settings file. "
+                    "Default values will be used."
+                )
+
+            else:
+                mensaje = (
+                    "We couldn't read your settings. "
+                    "Default values will be used."
+                )
+
+        else:
+            titulo = "Configuración"
+
+            if self.error_carga == "archivo_ausente":
+                mensaje = (
+                    "No encontramos un archivo de "
+                    "configuración. Usaremos los "
+                    "valores predeterminados."
+                )
+
+            elif self.error_carga == "archivo_corrupto":
+                mensaje = (
+                    "Tu archivo de configuración está "
+                    "corrupto o tiene un formato inválido. "
+                    "Usaremos los valores predeterminados."
+                )
+
+            elif self.error_carga == "sin_permiso_lectura":
+                mensaje = (
+                    "No tienes permisos para leer el "
+                    "archivo de configuración. "
+                    "Usaremos los valores predeterminados."
+                )
+
+            else:
+                mensaje = (
+                    "No pudimos leer tu configuración. "
+                    "Usaremos los valores predeterminados."
+                )
+
         QMessageBox.warning(
             self,
-            "Configuración",
-            self.error_carga
+            titulo,
+            mensaje
         )
 
 
-app = QApplication(sys.argv)
+app = QApplication(
+    sys.argv
+)
 
 ventana = VentanaPrincipal()
+
 ventana.show()
 
-sys.exit(app.exec())
+sys.exit(
+    app.exec()
+)
