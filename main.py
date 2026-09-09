@@ -174,14 +174,16 @@ class VentanaSettings(QDialog):
         self.actualizar_textos()
 
     def actualizar_textos(self):
-        idioma = self.idioma.currentData()
-
+        idioma_actual = self.idioma.currentData()
         tema_actual = self.tema.currentData()
 
+        self.idioma.blockSignals(True)
         self.tema.blockSignals(True)
+
+        self.idioma.clear()
         self.tema.clear()
 
-        if idioma == "en-US":
+        if idioma_actual == "en-US":
             self.setWindowTitle("Settings")
 
             self.etiqueta_nombre.setText(
@@ -210,6 +212,16 @@ class VentanaSettings(QDialog):
 
             self.etiqueta_foto.setText(
                 "Profile picture:"
+            )
+
+            self.idioma.addItem(
+                "Spanish",
+                "es-ES"
+            )
+
+            self.idioma.addItem(
+                "English",
+                "en-US"
             )
 
             self.tema.addItem(
@@ -262,6 +274,16 @@ class VentanaSettings(QDialog):
                 "Foto de perfil:"
             )
 
+            self.idioma.addItem(
+                "Español",
+                "es-ES"
+            )
+
+            self.idioma.addItem(
+                "Inglés",
+                "en-US"
+            )
+
             self.tema.addItem(
                 "Claro",
                 "Claro"
@@ -281,6 +303,15 @@ class VentanaSettings(QDialog):
                     "Seleccionar foto"
                 )
 
+        indice_idioma = self.idioma.findData(
+            idioma_actual
+        )
+
+        if indice_idioma >= 0:
+            self.idioma.setCurrentIndex(
+                indice_idioma
+            )
+
         indice_tema = self.tema.findData(
             tema_actual
         )
@@ -295,6 +326,7 @@ class VentanaSettings(QDialog):
                 indice_tema
             )
 
+        self.idioma.blockSignals(False)
         self.tema.blockSignals(False)
 
         self.boton_color_menu.setText(
@@ -733,22 +765,26 @@ class VentanaPrincipal(QMainWindow):
             fondo = "#202124"
             controles = "#303134"
             borde = "#5f6368"
-
-            # Texto general
             color_letra = "#ffffff"
 
-            # Texto de la barra del menú
+            color_lista = "#303134"
+            color_texto_lista = "#ffffff"
+            seleccion_lista = "#505050"
+            color_texto_seleccion = "#ffffff"
+
             color_texto_menu = "#000000"
 
         else:
             fondo = "#ffffff"
             controles = "#f5f5f5"
             borde = "#cccccc"
-
-            # Texto general
             color_letra = "#000000"
 
-            # Texto de la barra del menú
+            color_lista = "#ffffff"
+            color_texto_lista = "#000000"
+            seleccion_lista = "#d6d6d6"
+            color_texto_seleccion = "#000000"
+
             color_texto_menu = "#000000"
 
         estilo = f"""
@@ -773,7 +809,15 @@ class VentanaPrincipal(QMainWindow):
                 border: 1px solid {borde};
                 padding: 5px;
             }}
-
+            
+            QComboBox QAbstractItemView {{
+                background-color: {color_lista};
+                color: {color_texto_lista};
+                selection-background-color: {seleccion_lista};
+                selection-color: {color_texto_seleccion};
+                border: 1px solid {borde};
+                outline: none;
+}}
             QPushButton {{
                 background-color: {controles};
                 color: {color_letra};
