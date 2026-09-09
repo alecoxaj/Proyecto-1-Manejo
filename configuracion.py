@@ -1,10 +1,10 @@
 import json
 import os
-import shutill
+import shutil
 
 ARCHIVO_CONFIG = "config.json"
 ARCHIVO_TEMPORAL = "config.tmp"
-ARCHIVO_RESPALD0 = "config.bak"
+ARCHIVO_RESPALDO = "config.bak"
 
 CONFIGURACION_PREDETERMINADA = {
     "nombre_usuario": "Usuario",
