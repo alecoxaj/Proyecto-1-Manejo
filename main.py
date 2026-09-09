@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -29,7 +30,8 @@ from PySide6.QtCore import (
 
 from configuracion import (
     cargar_configuracion,
-    guardar_configuracion
+    guardar_configuracion,
+    CONFIGURACION_PREDETERMINADA
 )
 
 
@@ -63,6 +65,56 @@ def color_fue_personalizado(configuracion):
     )
 
     return color != color_predeterminado
+
+
+def preparar_configuracion_externa(datos):
+    if not isinstance(datos, dict):
+        raise ValueError(
+            "La configuración debe ser un objeto JSON."
+        )
+
+    nueva = (
+        CONFIGURACION_PREDETERMINADA.copy()
+    )
+
+    nueva.update(datos)
+
+    if nueva.get("tema_interfaz") == "Dark":
+        nueva["tema_interfaz"] = "Oscuro"
+
+    elif nueva.get("tema_interfaz") == "Light":
+        nueva["tema_interfaz"] = "Claro"
+
+    if nueva["tema_interfaz"] not in (
+        "Claro",
+        "Oscuro"
+    ):
+        raise ValueError(
+            "Tema de interfaz inválido."
+        )
+
+    if nueva["idioma"] not in (
+        "es-ES",
+        "en-US"
+    ):
+        raise ValueError(
+            "Idioma inválido."
+        )
+
+    if not isinstance(
+        nueva["tamano_fuente"],
+        int
+    ):
+        raise ValueError(
+            "El tamaño de fuente debe ser un número entero."
+        )
+
+    if not 8 <= nueva["tamano_fuente"] <= 40:
+        raise ValueError(
+            "El tamaño de fuente debe estar entre 8 y 40."
+        )
+
+    return nueva
 
 
 def crear_estilo(
@@ -744,11 +796,13 @@ class VentanaSettings(QDialog):
                 "Imágenes (*.png *.jpg *.jpeg)"
             )
 
-        archivo, _ = QFileDialog.getOpenFileName(
-            self,
-            titulo,
-            "",
-            filtro
+        archivo, _ = (
+            QFileDialog.getOpenFileName(
+                self,
+                titulo,
+                "",
+                filtro
+            )
         )
 
         if archivo:
@@ -878,8 +932,7 @@ class VentanaSettings(QDialog):
         ).lower()
 
         sin_permiso = (
-            error == "sin_permiso_escritura"
-            or "permiso" in texto_error
+            "permiso" in texto_error
             or "permission" in texto_error
         )
 
@@ -1020,13 +1073,385 @@ class VentanaPrincipal(QMainWindow):
             )
         )
 
-        self.accion_settings.triggered.connect(
-            self.abrir_settings
+        self.accion_nuevo.triggered.connect(
+            self.nueva_configuracion
+        )
+
+        self.accion_abrir.triggered.connect(
+            self.abrir_configuracion
         )
 
         self.accion_salir.triggered.connect(
             self.close
         )
+
+        self.accion_copiar.triggered.connect(
+            self.copiar_configuracion
+        )
+
+        self.accion_pegar.triggered.connect(
+            self.pegar_configuracion
+        )
+
+        self.accion_actualizar.triggered.connect(
+            self.actualizar_configuracion
+        )
+
+        self.accion_settings.triggered.connect(
+            self.abrir_settings
+        )
+
+    def nueva_configuracion(self):
+        idioma_anterior = self.configuracion[
+            "idioma"
+        ]
+
+        nueva = (
+            CONFIGURACION_PREDETERMINADA.copy()
+        )
+
+        nueva[
+            "color_letra_personalizado"
+        ] = False
+
+        correcto, error = (
+            guardar_configuracion(
+                nueva
+            )
+        )
+
+        if correcto:
+            self.configuracion = nueva
+
+            self.preparar_color_texto()
+
+            self.aplicar_configuracion()
+
+            if idioma_anterior == "en-US":
+                QMessageBox.information(
+                    self,
+                    "New",
+                    "A new default configuration "
+                    "was created."
+                )
+
+            else:
+                QMessageBox.information(
+                    self,
+                    "Nuevo",
+                    "Se creó una nueva configuración "
+                    "predeterminada."
+                )
+
+        else:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(error)
+            )
+
+    def abrir_configuracion(self):
+        idioma_actual = self.configuracion[
+            "idioma"
+        ]
+
+        if idioma_actual == "en-US":
+            titulo = "Open configuration"
+            filtro = "JSON files (*.json)"
+
+        else:
+            titulo = "Abrir configuración"
+            filtro = "Archivos JSON (*.json)"
+
+        ruta, _ = (
+            QFileDialog.getOpenFileName(
+                self,
+                titulo,
+                "",
+                filtro
+            )
+        )
+
+        if not ruta:
+            return
+
+        try:
+            with open(
+                ruta,
+                "r",
+                encoding="utf-8"
+            ) as archivo:
+
+                datos = json.load(
+                    archivo
+                )
+
+            nueva = (
+                preparar_configuracion_externa(
+                    datos
+                )
+            )
+
+            correcto, error = (
+                guardar_configuracion(
+                    nueva
+                )
+            )
+
+            if not correcto:
+                raise OSError(
+                    str(error)
+                )
+
+            self.configuracion = nueva
+
+            self.preparar_color_texto()
+
+            self.aplicar_configuracion()
+
+            if self.configuracion[
+                "idioma"
+            ] == "en-US":
+
+                QMessageBox.information(
+                    self,
+                    "Open",
+                    "The configuration was "
+                    "loaded successfully."
+                )
+
+            else:
+                QMessageBox.information(
+                    self,
+                    "Abrir",
+                    "La configuración se "
+                    "cargó correctamente."
+                )
+
+        except (
+            json.JSONDecodeError,
+            ValueError
+        ):
+            if idioma_actual == "en-US":
+                mensaje = (
+                    "The selected file does not "
+                    "contain a valid configuration."
+                )
+
+            else:
+                mensaje = (
+                    "El archivo seleccionado no "
+                    "contiene una configuración válida."
+                )
+
+            QMessageBox.critical(
+                self,
+                "Error",
+                mensaje
+            )
+
+        except PermissionError:
+            if idioma_actual == "en-US":
+                mensaje = (
+                    "You don't have permission "
+                    "to read this file."
+                )
+
+            else:
+                mensaje = (
+                    "No tienes permisos para "
+                    "leer este archivo."
+                )
+
+            QMessageBox.critical(
+                self,
+                "Error",
+                mensaje
+            )
+
+        except OSError as error:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(error)
+            )
+
+    def copiar_configuracion(self):
+        texto = json.dumps(
+            self.configuracion,
+            ensure_ascii=False,
+            indent=4
+        )
+
+        portapapeles = (
+            QApplication.clipboard()
+        )
+
+        portapapeles.setText(
+            texto
+        )
+
+        idioma = self.configuracion[
+            "idioma"
+        ]
+
+        if idioma == "en-US":
+            QMessageBox.information(
+                self,
+                "Copy",
+                "The configuration was copied "
+                "to the clipboard."
+            )
+
+        else:
+            QMessageBox.information(
+                self,
+                "Copiar",
+                "La configuración se copió "
+                "al portapapeles."
+            )
+
+    def pegar_configuracion(self):
+        idioma_anterior = self.configuracion[
+            "idioma"
+        ]
+
+        portapapeles = (
+            QApplication.clipboard()
+        )
+
+        texto = portapapeles.text()
+
+        try:
+            datos = json.loads(
+                texto
+            )
+
+            nueva = (
+                preparar_configuracion_externa(
+                    datos
+                )
+            )
+
+            correcto, error = (
+                guardar_configuracion(
+                    nueva
+                )
+            )
+
+            if not correcto:
+                raise OSError(
+                    str(error)
+                )
+
+            self.configuracion = nueva
+
+            self.preparar_color_texto()
+
+            self.aplicar_configuracion()
+
+            if self.configuracion[
+                "idioma"
+            ] == "en-US":
+
+                QMessageBox.information(
+                    self,
+                    "Paste",
+                    "The configuration was pasted "
+                    "and applied successfully."
+                )
+
+            else:
+                QMessageBox.information(
+                    self,
+                    "Pegar",
+                    "La configuración se pegó "
+                    "y se aplicó correctamente."
+                )
+
+        except (
+            json.JSONDecodeError,
+            ValueError
+        ):
+            if idioma_anterior == "en-US":
+                mensaje = (
+                    "The clipboard does not contain "
+                    "a valid configuration."
+                )
+
+            else:
+                mensaje = (
+                    "El portapapeles no contiene "
+                    "una configuración válida."
+                )
+
+            QMessageBox.critical(
+                self,
+                "Error",
+                mensaje
+            )
+
+        except OSError as error:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(error)
+            )
+
+    def actualizar_configuracion(self):
+        idioma_anterior = self.configuracion[
+            "idioma"
+        ]
+
+        nueva_configuracion, error = (
+            cargar_configuracion()
+        )
+
+        if error:
+            if idioma_anterior == "en-US":
+                QMessageBox.warning(
+                    self,
+                    "Refresh",
+                    "The configuration could not "
+                    "be refreshed."
+                )
+
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Actualizar",
+                    "No se pudo actualizar "
+                    "la configuración."
+                )
+
+            return
+
+        self.configuracion = (
+            nueva_configuracion
+        )
+
+        self.preparar_color_texto()
+
+        self.aplicar_configuracion()
+
+        if self.configuracion[
+            "idioma"
+        ] == "en-US":
+
+            QMessageBox.information(
+                self,
+                "Refresh",
+                "The configuration was reloaded "
+                "from the file."
+            )
+
+        else:
+            QMessageBox.information(
+                self,
+                "Actualizar",
+                "La configuración se volvió "
+                "a cargar desde el archivo."
+            )
 
     def crear_interfaz(self):
         self.titulo = QLabel()
@@ -1110,9 +1535,11 @@ class VentanaPrincipal(QMainWindow):
             self.aplicar_configuracion()
 
     def aplicar_configuracion(self):
-        personalizado = self.configuracion.get(
-            "color_letra_personalizado",
-            False
+        personalizado = (
+            self.configuracion.get(
+                "color_letra_personalizado",
+                False
+            )
         )
 
         if not personalizado:
@@ -1311,18 +1738,14 @@ class VentanaPrincipal(QMainWindow):
         if idioma == "en-US":
             titulo = "Settings"
 
-            if (
-                self.error_carga == "archivo_ausente"
-                or "no existe" in texto_error
-            ):
+            if "no existe" in texto_error:
                 mensaje = (
                     "No settings file was found. "
                     "Default values will be used."
                 )
 
             elif (
-                self.error_carga == "archivo_corrupto"
-                or "corrupt" in texto_error
+                "corrupt" in texto_error
                 or "inválido" in texto_error
                 or "invalido" in texto_error
             ):
@@ -1333,8 +1756,8 @@ class VentanaPrincipal(QMainWindow):
                 )
 
             elif (
-                self.error_carga == "sin_permiso_lectura"
-                or "permiso" in texto_error
+                "permiso" in texto_error
+                or "permission" in texto_error
             ):
                 mensaje = (
                     "You don't have permission to "
@@ -1351,10 +1774,7 @@ class VentanaPrincipal(QMainWindow):
         else:
             titulo = "Configuración"
 
-            if (
-                self.error_carga == "archivo_ausente"
-                or "no existe" in texto_error
-            ):
+            if "no existe" in texto_error:
                 mensaje = (
                     "No encontramos un archivo de "
                     "configuración. Usaremos los "
@@ -1362,8 +1782,7 @@ class VentanaPrincipal(QMainWindow):
                 )
 
             elif (
-                self.error_carga == "archivo_corrupto"
-                or "corrupt" in texto_error
+                "corrupt" in texto_error
                 or "inválido" in texto_error
                 or "invalido" in texto_error
             ):
@@ -1374,8 +1793,8 @@ class VentanaPrincipal(QMainWindow):
                 )
 
             elif (
-                self.error_carga == "sin_permiso_lectura"
-                or "permiso" in texto_error
+                "permiso" in texto_error
+                or "permission" in texto_error
             ):
                 mensaje = (
                     "No tienes permisos para leer el "
