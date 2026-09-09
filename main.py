@@ -458,13 +458,23 @@ class VentanaPrincipal(QMainWindow):
             fondo = "#202124"
             controles = "#303134"
             borde = "#5f6368"
+
+            # Texto general
             color_letra = "#ffffff"
+
+            # Texto de la barra del menú
+            color_texto_menu = "#000000"
 
         else:
             fondo = "#ffffff"
             controles = "#f5f5f5"
             borde = "#cccccc"
+
+            # Texto general
             color_letra = "#000000"
+
+            # Texto de la barra del menú
+            color_texto_menu = "#000000"
 
         estilo = f"""
             QMainWindow {{
@@ -498,12 +508,26 @@ class VentanaPrincipal(QMainWindow):
 
             QMenuBar {{
                 background-color: {color_menu};
-                color: {color_letra};
+                color: {color_texto_menu};
+            }}
+
+            QMenuBar::item {{
+                color: {color_texto_menu};
+                padding: 6px 10px;
+            }}
+
+            QMenuBar::item:selected {{
+                background-color: #d6d6d6;
+                color: #000000;
             }}
 
             QMenu {{
                 background-color: {controles};
                 color: {color_letra};
+            }}
+
+            QMenu::item:selected {{
+                background-color: #505050;
             }}
         """
 
