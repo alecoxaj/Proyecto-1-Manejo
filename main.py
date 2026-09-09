@@ -20,17 +20,66 @@ from PySide6.QtWidgets import (
     QMessageBox
 )
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import (
+    QPixmap,
+    QColor
+)
 
 from PySide6.QtCore import (
     Qt,
-    QTimer
+    QTimer,
+    QTranslator,
+    QLibraryInfo
 )
 
 from configuracion import (
     cargar_configuracion,
     guardar_configuracion
 )
+
+
+TRADUCTOR_QT = None
+
+
+def aplicar_idioma_qt(idioma):
+    global TRADUCTOR_QT
+
+    app = QApplication.instance()
+
+    if app is None:
+        return
+
+    if TRADUCTOR_QT is not None:
+        app.removeTranslator(
+            TRADUCTOR_QT
+        )
+
+        TRADUCTOR_QT = None
+
+    if idioma == "es-ES":
+        ruta_traducciones = QLibraryInfo.path(
+            QLibraryInfo.LibraryPath.TranslationsPath
+        )
+
+        traductor = QTranslator()
+
+        cargado = traductor.load(
+            "qtbase_es.qm",
+            ruta_traducciones
+        )
+
+        if not cargado:
+            cargado = traductor.load(
+                "qt_es.qm",
+                ruta_traducciones
+            )
+
+        if cargado:
+            app.installTranslator(
+                traductor
+            )
+
+            TRADUCTOR_QT = traductor
 
 
 def color_predeterminado_tema(tema):
@@ -41,7 +90,10 @@ def color_predeterminado_tema(tema):
 
 
 def color_fue_personalizado(configuracion):
-    if "color_letra_personalizado" in configuracion:
+    if (
+        "color_letra_personalizado"
+        in configuracion
+    ):
         return configuracion[
             "color_letra_personalizado"
         ]
@@ -194,6 +246,10 @@ class VentanaSettings(QDialog):
 
         self.configuracion = (
             configuracion.copy()
+        )
+
+        self.idioma_original = (
+            self.configuracion["idioma"]
         )
 
         self.color_menu = (
@@ -648,6 +704,10 @@ class VentanaSettings(QDialog):
         if tema is None:
             tema = "Claro"
 
+        aplicar_idioma_qt(
+            idioma
+        )
+
         self.configurar_comboboxes(
             idioma,
             tema
@@ -704,8 +764,28 @@ class VentanaSettings(QDialog):
             )
 
     def seleccionar_color_menu(self):
+        idioma = self.idioma.currentData()
+
+        aplicar_idioma_qt(
+            idioma
+        )
+
+        if idioma == "en-US":
+            titulo = (
+                "Select menu bar color"
+            )
+
+        else:
+            titulo = (
+                "Seleccionar color "
+                "de la barra de menú"
+            )
+
         color = QColorDialog.getColor(
-            parent=self
+            QColor(self.color_menu),
+            self,
+            titulo,
+            QColorDialog.ColorDialogOption.DontUseNativeDialog
         )
 
         if color.isValid():
@@ -718,8 +798,27 @@ class VentanaSettings(QDialog):
             )
 
     def seleccionar_color_letra(self):
+        idioma = self.idioma.currentData()
+
+        aplicar_idioma_qt(
+            idioma
+        )
+
+        if idioma == "en-US":
+            titulo = (
+                "Select text color"
+            )
+
+        else:
+            titulo = (
+                "Seleccionar color de letra"
+            )
+
         color = QColorDialog.getColor(
-            parent=self
+            QColor(self.color_letra),
+            self,
+            titulo,
+            QColorDialog.ColorDialogOption.DontUseNativeDialog
         )
 
         if color.isValid():
@@ -735,6 +834,10 @@ class VentanaSettings(QDialog):
 
     def seleccionar_foto(self):
         idioma = self.idioma.currentData()
+
+        aplicar_idioma_qt(
+            idioma
+        )
 
         if idioma == "en-US":
             titulo = (
@@ -754,17 +857,19 @@ class VentanaSettings(QDialog):
                 "Imágenes (*.png *.jpg *.jpeg)"
             )
 
-        archivo, _ = (
-            QFileDialog.getOpenFileName(
-                self,
-                titulo,
-                "",
-                filtro
-            )
+        archivo, _ = QFileDialog.getOpenFileName(
+            self,
+            titulo,
+            "",
+            filtro,
+            "",
+            QFileDialog.Option.DontUseNativeDialog
         )
 
         if archivo:
-            self.foto_perfil = archivo
+            self.foto_perfil = (
+                archivo
+            )
 
             self.ruta_foto.setText(
                 os.path.basename(
@@ -783,9 +888,13 @@ class VentanaSettings(QDialog):
                 )
 
     def guardar(self):
-        idioma = self.idioma.currentData()
+        idioma = (
+            self.idioma.currentData()
+        )
 
-        tema = self.tema.currentData()
+        tema = (
+            self.tema.currentData()
+        )
 
         if not self.color_personalizado:
             self.color_letra = (
@@ -829,6 +938,10 @@ class VentanaSettings(QDialog):
         if correcto:
             self.configuracion = (
                 nueva_configuracion
+            )
+
+            aplicar_idioma_qt(
+                idioma
             )
 
             estilo = crear_estilo(
@@ -883,7 +996,9 @@ class VentanaSettings(QDialog):
         self,
         error
     ):
-        idioma = self.idioma.currentData()
+        idioma = (
+            self.idioma.currentData()
+        )
 
         texto_error = str(
             error
@@ -926,6 +1041,13 @@ class VentanaSettings(QDialog):
             mensaje
         )
 
+    def reject(self):
+        aplicar_idioma_qt(
+            self.idioma_original
+        )
+
+        super().reject()
+
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -933,6 +1055,12 @@ class VentanaPrincipal(QMainWindow):
 
         self.configuracion, self.error_carga = (
             cargar_configuracion()
+        )
+
+        aplicar_idioma_qt(
+            self.configuracion[
+                "idioma"
+            ]
         )
 
         self.preparar_color_texto()
@@ -977,16 +1105,22 @@ class VentanaPrincipal(QMainWindow):
     def crear_menu(self):
         barra = self.menuBar()
 
-        self.menu_archivo = barra.addMenu(
-            "Archivo"
+        self.menu_archivo = (
+            barra.addMenu(
+                "Archivo"
+            )
         )
 
-        self.menu_edicion = barra.addMenu(
-            "Edición"
+        self.menu_edicion = (
+            barra.addMenu(
+                "Edición"
+            )
         )
 
-        self.menu_ver = barra.addMenu(
-            "Ver"
+        self.menu_ver = (
+            barra.addMenu(
+                "Ver"
+            )
         )
 
         self.accion_settings = (
@@ -1123,6 +1257,12 @@ class VentanaPrincipal(QMainWindow):
             self.aplicar_configuracion()
 
     def aplicar_configuracion(self):
+        aplicar_idioma_qt(
+            self.configuracion[
+                "idioma"
+            ]
+        )
+
         personalizado = (
             self.configuracion.get(
                 "color_letra_personalizado",
@@ -1163,13 +1303,17 @@ class VentanaPrincipal(QMainWindow):
         self.actualizar_foto()
 
     def actualizar_idioma(self):
-        idioma = self.configuracion[
-            "idioma"
-        ]
+        idioma = (
+            self.configuracion[
+                "idioma"
+            ]
+        )
 
-        nombre = self.configuracion[
-            "nombre_usuario"
-        ]
+        nombre = (
+            self.configuracion[
+                "nombre_usuario"
+            ]
+        )
 
         if idioma == "en-US":
             self.setWindowTitle(
@@ -1288,9 +1432,11 @@ class VentanaPrincipal(QMainWindow):
             )
 
     def actualizar_foto(self):
-        ruta = self.configuracion[
-            "foto_perfil"
-        ]
+        ruta = (
+            self.configuracion[
+                "foto_perfil"
+            ]
+        )
 
         if (
             ruta
@@ -1315,9 +1461,11 @@ class VentanaPrincipal(QMainWindow):
             self.foto.clear()
 
     def mostrar_error_carga(self):
-        idioma = self.configuracion[
-            "idioma"
-        ]
+        idioma = (
+            self.configuracion[
+                "idioma"
+            ]
+        )
 
         texto_error = str(
             self.error_carga
@@ -1403,14 +1551,15 @@ class VentanaPrincipal(QMainWindow):
         )
 
 
-app = QApplication(
-    sys.argv
-)
+if __name__ == "__main__":
+    app = QApplication(
+        sys.argv
+    )
 
-ventana = VentanaPrincipal()
+    ventana = VentanaPrincipal()
 
-ventana.show()
+    ventana.show()
 
-sys.exit(
-    app.exec()
-)
+    sys.exit(
+        app.exec()
+    )
