@@ -16,4 +16,34 @@ CONFIGURACION_PREDETERMINADA = {
     "foto_perfil": ""
 }
 
+def cargar_configuracion():
+    try:
+        with open(ARCHIVO_CONFIG, "r", encoding="utf-8") as archivo:
+            datos = json.load(archivo)
+
+        if not isinstance(datos, dict):
+            raise ValueError("Formato de configuración inválido")
+
+        configuracion = CONFIGURACION_PREDETERMINADA.copy()
+
+        configuracion.update(datos)
+
+        return configuracion, None
+
+    except FileNotFoundError:
+        return (
+            CONFIGURACION_PREDETERMINADA.copy(),
+            "No existe un archivo de configuración. "
+            "Se utilizarán valores predeterminados."
+        )
+
+    except (json.JSONDecodeError, ValueError):
+        return (
+            CONFIGURACION_PREDETERMINADA.copy(),
+            "El archivo de configuración está corrupto o "
+            "tiene un formato inválido. "
+            "Se utilizarán valores predeterminados."
+        )
+
+
 
