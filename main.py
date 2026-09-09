@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QComboBox,
     QSpinBox,
+    QAbstractSpinBox,
     QPushButton,
     QColorDialog,
     QFileDialog,
@@ -29,6 +30,34 @@ from configuracion import (
     cargar_configuracion,
     guardar_configuracion
 )
+
+
+def color_predeterminado_tema(tema):
+    if tema == "Oscuro":
+        return "#ffffff"
+
+    return "#000000"
+
+
+def color_fue_personalizado(configuracion):
+    if "color_letra_personalizado" in configuracion:
+        return configuracion[
+            "color_letra_personalizado"
+        ]
+
+    color = configuracion.get(
+        "color_letra",
+        ""
+    ).lower()
+
+    if color not in (
+        "",
+        "#000000",
+        "#ffffff"
+    ):
+        return True
+
+    return False
 
 
 def crear_estilo(
@@ -65,7 +94,7 @@ def crear_estilo(
         fondo_menu = "#ffffff"
         texto_menu = "#000000"
 
-    estilo = f"""
+    return f"""
         QMainWindow {{
             background-color: {fondo};
         }}
@@ -149,8 +178,6 @@ def crear_estilo(
         }}
     """
 
-    return estilo
-
 
 class VentanaSettings(QDialog):
     def __init__(
@@ -166,9 +193,27 @@ class VentanaSettings(QDialog):
             "color_barra_menu"
         ]
 
-        self.color_letra = self.configuracion[
-            "color_letra"
-        ]
+        self.color_personalizado = (
+            color_fue_personalizado(
+                self.configuracion
+            )
+        )
+
+        if self.color_personalizado:
+            self.color_letra = (
+                self.configuracion[
+                    "color_letra"
+                ]
+            )
+
+        else:
+            self.color_letra = (
+                color_predeterminado_tema(
+                    self.configuracion[
+                        "tema_interfaz"
+                    ]
+                )
+            )
 
         self.foto_perfil = self.configuracion[
             "foto_perfil"
@@ -190,6 +235,18 @@ class VentanaSettings(QDialog):
         self.tamano_fuente.setRange(
             8,
             40
+        )
+
+        self.tamano_fuente.setSingleStep(
+            1
+        )
+
+        self.tamano_fuente.setButtonSymbols(
+            QAbstractSpinBox.ButtonSymbols.UpDownArrows
+        )
+
+        self.tamano_fuente.setMinimumWidth(
+            120
         )
 
         self.boton_color_menu = QPushButton()
@@ -389,8 +446,10 @@ class VentanaSettings(QDialog):
                 "Oscuro"
             )
 
-        indice_idioma = self.idioma.findData(
-            idioma
+        indice_idioma = (
+            self.idioma.findData(
+                idioma
+            )
         )
 
         if indice_idioma >= 0:
@@ -398,8 +457,10 @@ class VentanaSettings(QDialog):
                 indice_idioma
             )
 
-        indice_tema = self.tema.findData(
-            tema
+        indice_tema = (
+            self.tema.findData(
+                tema
+            )
         )
 
         if indice_tema >= 0:
@@ -542,15 +603,19 @@ class VentanaSettings(QDialog):
     ):
         tema = self.tema.currentData()
 
-        if tema == "Oscuro":
-            self.color_letra = "#ffffff"
+        if tema is None:
+            return
 
-        elif tema == "Claro":
-            self.color_letra = "#000000"
+        if not self.color_personalizado:
+            self.color_letra = (
+                color_predeterminado_tema(
+                    tema
+                )
+            )
 
-        self.boton_color_letra.setText(
-            self.color_letra
-        )
+            self.boton_color_letra.setText(
+                self.color_letra
+            )
 
     def seleccionar_color_menu(self):
         color = QColorDialog.getColor(
@@ -558,7 +623,9 @@ class VentanaSettings(QDialog):
         )
 
         if color.isValid():
-            self.color_menu = color.name()
+            self.color_menu = (
+                color.name()
+            )
 
             self.boton_color_menu.setText(
                 self.color_menu
@@ -570,7 +637,11 @@ class VentanaSettings(QDialog):
         )
 
         if color.isValid():
-            self.color_letra = color.name()
+            self.color_letra = (
+                color.name()
+            )
+
+            self.color_personalizado = True
 
             self.boton_color_letra.setText(
                 self.color_letra
@@ -597,11 +668,13 @@ class VentanaSettings(QDialog):
                 "Imágenes (*.png *.jpg *.jpeg)"
             )
 
-        archivo, _ = QFileDialog.getOpenFileName(
-            self,
-            titulo,
-            "",
-            filtro
+        archivo, _ = (
+            QFileDialog.getOpenFileName(
+                self,
+                titulo,
+                "",
+                filtro
+            )
         )
 
         if archivo:
@@ -628,6 +701,13 @@ class VentanaSettings(QDialog):
 
         tema = self.tema.currentData()
 
+        if not self.color_personalizado:
+            self.color_letra = (
+                color_predeterminado_tema(
+                    tema
+                )
+            )
+
         nueva_configuracion = {
             "nombre_usuario":
                 self.nombre_usuario.text(),
@@ -647,12 +727,17 @@ class VentanaSettings(QDialog):
             "color_letra":
                 self.color_letra,
 
+            "color_letra_personalizado":
+                self.color_personalizado,
+
             "foto_perfil":
                 self.foto_perfil
         }
 
-        correcto, error = guardar_configuracion(
-            nueva_configuracion
+        correcto, error = (
+            guardar_configuracion(
+                nueva_configuracion
+            )
         )
 
         if correcto:
@@ -714,8 +799,16 @@ class VentanaSettings(QDialog):
     ):
         idioma = self.idioma.currentData()
 
+        texto_error = str(error).lower()
+
+        sin_permiso = (
+            error == "sin_permiso_escritura"
+            or "permiso" in texto_error
+            or "permission" in texto_error
+        )
+
         if idioma == "en-US":
-            if error == "sin_permiso_escritura":
+            if sin_permiso:
                 mensaje = (
                     "You don't have permission "
                     "to save the settings."
@@ -728,7 +821,7 @@ class VentanaSettings(QDialog):
                 )
 
         else:
-            if error == "sin_permiso_escritura":
+            if sin_permiso:
                 mensaje = (
                     "No tienes permisos para "
                     "guardar la configuración."
@@ -755,7 +848,7 @@ class VentanaPrincipal(QMainWindow):
             cargar_configuracion()
         )
 
-        self.corregir_color_incompatible()
+        self.preparar_color_texto()
 
         self.resize(
             900,
@@ -774,30 +867,25 @@ class VentanaPrincipal(QMainWindow):
                 self.mostrar_error_carga
             )
 
-    def corregir_color_incompatible(self):
-        tema = self.configuracion[
-            "tema_interfaz"
-        ]
+    def preparar_color_texto(self):
+        personalizado = (
+            color_fue_personalizado(
+                self.configuracion
+            )
+        )
 
-        color = self.configuracion[
-            "color_letra"
-        ].lower()
+        self.configuracion[
+            "color_letra_personalizado"
+        ] = personalizado
 
-        if (
-            tema == "Claro"
-            and color == "#ffffff"
-        ):
+        if not personalizado:
             self.configuracion[
                 "color_letra"
-            ] = "#000000"
-
-        elif (
-            tema == "Oscuro"
-            and color == "#000000"
-        ):
-            self.configuracion[
-                "color_letra"
-            ] = "#ffffff"
+            ] = color_predeterminado_tema(
+                self.configuracion[
+                    "tema_interfaz"
+                ]
+            )
 
     def crear_menu(self):
         barra = self.menuBar()
@@ -946,6 +1034,22 @@ class VentanaPrincipal(QMainWindow):
             self.aplicar_configuracion()
 
     def aplicar_configuracion(self):
+        personalizado = (
+            self.configuracion.get(
+                "color_letra_personalizado",
+                False
+            )
+        )
+
+        if not personalizado:
+            self.configuracion[
+                "color_letra"
+            ] = color_predeterminado_tema(
+                self.configuracion[
+                    "tema_interfaz"
+                ]
+            )
+
         estilo = crear_estilo(
             self.configuracion[
                 "tema_interfaz"
@@ -1126,23 +1230,38 @@ class VentanaPrincipal(QMainWindow):
             "idioma"
         ]
 
+        texto_error = str(
+            self.error_carga
+        ).lower()
+
         if idioma == "en-US":
             titulo = "Settings"
 
-            if self.error_carga == "archivo_ausente":
+            if (
+                self.error_carga == "archivo_ausente"
+                or "no existe" in texto_error
+            ):
                 mensaje = (
                     "No settings file was found. "
                     "Default values will be used."
                 )
 
-            elif self.error_carga == "archivo_corrupto":
+            elif (
+                self.error_carga == "archivo_corrupto"
+                or "corrupt" in texto_error
+                or "inválido" in texto_error
+                or "invalido" in texto_error
+            ):
                 mensaje = (
                     "Your settings file is corrupted "
                     "or has an invalid format. "
                     "Default values will be used."
                 )
 
-            elif self.error_carga == "sin_permiso_lectura":
+            elif (
+                self.error_carga == "sin_permiso_lectura"
+                or "permiso" in texto_error
+            ):
                 mensaje = (
                     "You don't have permission to "
                     "read the settings file. "
@@ -1158,21 +1277,32 @@ class VentanaPrincipal(QMainWindow):
         else:
             titulo = "Configuración"
 
-            if self.error_carga == "archivo_ausente":
+            if (
+                self.error_carga == "archivo_ausente"
+                or "no existe" in texto_error
+            ):
                 mensaje = (
                     "No encontramos un archivo de "
                     "configuración. Usaremos los "
                     "valores predeterminados."
                 )
 
-            elif self.error_carga == "archivo_corrupto":
+            elif (
+                self.error_carga == "archivo_corrupto"
+                or "corrupt" in texto_error
+                or "inválido" in texto_error
+                or "invalido" in texto_error
+            ):
                 mensaje = (
                     "Tu archivo de configuración está "
                     "corrupto o tiene un formato inválido. "
                     "Usaremos los valores predeterminados."
                 )
 
-            elif self.error_carga == "sin_permiso_lectura":
+            elif (
+                self.error_carga == "sin_permiso_lectura"
+                or "permiso" in texto_error
+            ):
                 mensaje = (
                     "No tienes permisos para leer el "
                     "archivo de configuración. "
