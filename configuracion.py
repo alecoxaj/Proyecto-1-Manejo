@@ -108,5 +108,13 @@ def guardar_configuracion(configuracion):
             f"Error al guardar la configuración: {error}"
         )
 
+def eliminar_temporal():
+    try:
+        if os.path.exists(ARCHIVO_TEMPORAL):
+            os.remove(ARCHIVO_TEMPORAL)
+
+    except OSError:
+        pass
+
 
 
