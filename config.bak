@@ -1,10 +1,10 @@
 {
-    "nombre_usuario": "Fátima Sandoval",
+    "nombre_usuario": "Alejandro Coxaj",
     "tema_interfaz": "Oscuro",
     "idioma": "es-ES",
-    "tamano_fuente": 16,
-    "color_barra_menu": "#aaaaff",
-    "color_letra": "#5555ff",
+    "tamano_fuente": 14,
+    "color_barra_menu": "#00aa00",
+    "color_letra": "#00ffff",
     "color_letra_personalizado": true,
     "foto_perfil": "C:/Users/aleja/Downloads/iPhone 17 Pro.jpg"
 }
